@@ -1,24 +1,43 @@
 import httpx
 
-c = httpx.get('https://www.cnb.cz/en/financial-markets/foreign-exchange-market/central-bank-exchange-rate-fixing/central-bank-exchange-rate-fixing/daily.txt')
-print(c.text)
+odkaz = httpx.get('https://www.cnb.cz/en/financial-markets/foreign-exchange-market/central-bank-exchange-rate-fixing/central-bank-exchange-rate-fixing/daily.txt')
+lines = odkaz.text.splitlines()
 
-lines = c.text.split('\n')
-print(lines[0])
-
-line_euro = ""
-
+kurz = None
 for line in lines:
-    if "EUR" in line:
-        line_euro = line
+    if line.startswith("EMU|"):
+        kurz = float(line.split("|")[-1])
         break
 
-rare_str = line_euro.split('|')[-1].replace(',' , ',')
-rate = float(rare_str)
+if kurz is None:
+    print("Kurz nebyl nalezen")
+    exit()
 
-print("kurz eura je" , rate)
+zadana_mena = input("Z jaké měny převádíme: EUR nebo CZK >").strip().upper()
+prevod = input("Do jaké měny převádíme: EUR nebo CZK >").strip().upper()
 
-value_in = float(input("kolik mas eur?"))
-value_out = value_in * rate
+if zadana_mena not in ("EUR", "CZK") or prevod not in ("EUR", "CZK"):
+    print("Neznámá informace pro systém.")
+    exit()
 
-print(f"tak to je {value_out:.2f} korun")
+if zadana_mena == prevod:
+    print("To potom není převod...")
+    exit()
+
+try:
+    mnozstvi = float(input("Zadejte množství: "))
+    if mnozstvi <= 0:
+        print("Měna má být pozitivní.")
+        exit()
+except ValueError:
+    print("Neplatná částka.")
+    exit()
+
+
+if zadana_mena == 'EUR' and prevod == 'CZK':
+    vysledek = mnozstvi * kurz
+
+elif zadana_mena == 'CZK' and prevod == 'EUR':
+    vysledek = mnozstvi / kurz
+
+print(f" {mnozstvi:.2f} {zadana_mena} = {vysledek:.2f} {prevod}")
